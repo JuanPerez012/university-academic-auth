@@ -1,50 +1,69 @@
 package com.authservice.config;
 
-
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.*;
 import com.nimbusds.jwt.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
-@Configuration
+@Component
 public class JwtConfig {
 
-    @Value("${jwt.secret:defaultsecret1234567890}")
+    private static final Logger logger = LoggerFactory.getLogger(JwtConfig.class);
+
+    @Value("${jwt.secret}")
     private String secret;
 
     public String generateToken(String subject, List<String> roles, int minutes) {
         try {
-            JWSSigner signer = new MACSigner(secret.getBytes());
-            JWTClaimsSet claims = new JWTClaimsSet.Builder()
+            var signer = new MACSigner(secret.getBytes(StandardCharsets.UTF_8));
+            var claims = new JWTClaimsSet.Builder()
                     .subject(subject)
                     .claim("roles", roles)
-                    .expirationTime(new Date(System.currentTimeMillis() + (minutes * 60 * 1000)))
+                    .expirationTime(new Date(System.currentTimeMillis() + (minutes * 60 * 1000L)))
                     .issueTime(new Date())
                     .build();
 
-            SignedJWT jwt = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claims);
+            var jwt = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claims);
             jwt.sign(signer);
+
             return jwt.serialize();
         } catch (JOSEException e) {
-            throw new RuntimeException("Error al generar el token JWT", e);
+            logger.error("Error generando token JWT: {}", e.getMessage());
+            throw new IllegalStateException("Error al generar el token JWT", e);
         }
     }
 
-    public Map<String, Object> validate(String token) {
+    public JwtPayload validate(String token) {
         try {
-            SignedJWT jwt = SignedJWT.parse(token);
-            JWSVerifier verifier = new MACVerifier(secret.getBytes());
-            if (!jwt.verify(verifier)) throw new RuntimeException("Token inválido");
-            if (jwt.getJWTClaimsSet().getExpirationTime().before(new Date()))
-                throw new RuntimeException("Token expirado");
-            return jwt.getJWTClaimsSet().getClaims();
+            var jwt = SignedJWT.parse(token);
+            var verifier = new MACVerifier(secret.getBytes(StandardCharsets.UTF_8));
+
+            if (!jwt.verify(verifier)) {
+                logger.warn("Token inválido: firma incorrecta");
+                throw new SecurityException("Token inválido");
+            }
+
+            var claims = jwt.getJWTClaimsSet();
+            if (claims.getExpirationTime().before(new Date())) {
+                logger.warn("Token expirado para el usuario {}", claims.getSubject());
+                throw new SecurityException("Token expirado");
+            }
+
+            return new JwtPayload(
+                    claims.getSubject(),
+                    (List<String>) claims.getClaim("roles"),
+                    claims.getExpirationTime()
+            );
         } catch (Exception e) {
-            throw new RuntimeException("Token inválido", e);
+            logger.error("Error validando token JWT: {}", e.getMessage());
+            throw new SecurityException("Token inválido o corrupto", e);
         }
     }
+
+    public record JwtPayload(String subject, List<String> roles, Date expiration) {}
 }
