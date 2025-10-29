@@ -1,9 +1,9 @@
 package com.authservice.service;
 
-import com.authservice.Entity.User;
-import com.authservice.Entity.UserRole;
-import com.authservice.Repository.UserRepository;
-import com.authservice.Repository.UserRoleRepository;
+import com.authservice.entity.User;
+import com.authservice.entity.UserRole;
+import com.authservice.repository.UserRepository;
+import com.authservice.repository.UserRoleRepository;
 import com.authservice.config.JwtConfig;
 import com.authservice.dto.LoginRequest;
 import com.authservice.dto.RegisterRequest;

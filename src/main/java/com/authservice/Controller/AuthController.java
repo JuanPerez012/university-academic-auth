@@ -1,4 +1,4 @@
-package com.authservice.Controller;
+package com.authservice.controller;
 
 import com.authservice.dto.UpsertUserRequest;
 import com.authservice.dto.LoginRequest;
@@ -8,11 +8,11 @@ import com.authservice.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import jakarta.validation.Valid;
+import static com.authservice.utils.ApiPaths.AUTHS;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping(AUTHS)
 @RequiredArgsConstructor
 public class AuthController {
 
