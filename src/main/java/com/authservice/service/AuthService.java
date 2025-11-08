@@ -9,7 +9,6 @@ import com.authservice.config.JwtConfig;
 import com.authservice.dto.LoginRequest;
 import com.authservice.dto.RegisterRequest;
 import com.authservice.dto.TokenResponse;
-import com.authservice.dto.UpsertUserRequest;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,50 +73,6 @@ public class AuthService {
 
         String token = jwt.generateToken(user.getEmail(), roles, 30);
         return new TokenResponse(token, "Bearer", 1800);
-    }
-
-    @Transactional
-    public TokenResponse upsert(UpsertUserRequest r) {
-        var existing = userRepository.findByEmail(r.email());
-
-        if (existing.isEmpty()) {
-            var u = new User();
-            u.setEmail(r.email());
-            String raw = (r.password() != null && !r.password().isBlank())
-                    ? r.password()
-                    : generateTempPassword();
-            u.setPasswordHash(encoder.encode(raw));
-            userRepository.save(u);
-
-            var role = new UserRole();
-            role.setUser(u);
-            role.setRoleName(r.role());
-            roleRepository.save(role);
-            u.getRoles().add(role);
-
-            String token = jwt.generateToken(u.getEmail(), List.of(role.getRoleName()), 30);
-            return new TokenResponse(token, "Bearer", 1800);
-        } else {
-            var u = existing.get();
-
-            boolean hasRole = u.getRoles().stream()
-                    .anyMatch(rr -> rr.getRoleName() == r.role());
-
-            if (!hasRole) {
-                var role = new UserRole();
-                role.setUser(u);
-                role.setRoleName(r.role());
-                roleRepository.save(role);
-                u.getRoles().add(role);
-            }
-
-            List<RoleName> roles = u.getRoles().stream()
-                    .map(UserRole::getRoleName)
-                    .collect(Collectors.toList());
-
-            String token = jwt.generateToken(u.getEmail(), roles, 30);
-            return new TokenResponse(token, "Bearer", 1800);
-        }
     }
 
     private RoleName determineRoleFromCode(String code) {
