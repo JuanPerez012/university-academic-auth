@@ -21,13 +21,6 @@ public class JwtConfig {
     @Value("${jwt.secret}")
     private String secret;
 
-    /**
-     * Genera un token JWT con roles como enums
-     * @param subject Email del usuario
-     * @param roles Lista de roles (enum RoleName)
-     * @param minutes Tiempo de expiración en minutos
-     * @return Token JWT serializado
-     */
     public String generateToken(String subject, List<RoleName> roles, int minutes) {
         try {
             var signer = new MACSigner(secret.getBytes(StandardCharsets.UTF_8));
