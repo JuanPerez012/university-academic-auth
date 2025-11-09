@@ -1,0 +1,10 @@
+services:
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: auth-service:develop
+    ports:
+      - "8084:8084"
+    environment:
+      SERVER_PORT: 8084
