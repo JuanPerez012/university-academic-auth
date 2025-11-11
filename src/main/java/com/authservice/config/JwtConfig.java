@@ -1,5 +1,6 @@
 package com.authservice.config;
 
+import com.authservice.enums.RoleName;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.*;
 import com.nimbusds.jwt.*;
@@ -7,8 +8,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtConfig {
@@ -18,12 +21,18 @@ public class JwtConfig {
     @Value("${jwt.secret}")
     private String secret;
 
-    public String generateToken(String subject, List<String> roles, int minutes) {
+    public String generateToken(String subject, List<RoleName> roles, int minutes) {
         try {
             var signer = new MACSigner(secret.getBytes(StandardCharsets.UTF_8));
+
+            // Convertir enums a strings para el token
+            List<String> roleNames = roles.stream()
+                    .map(RoleName::name)
+                    .collect(Collectors.toList());
+
             var claims = new JWTClaimsSet.Builder()
                     .subject(subject)
-                    .claim("roles", roles)
+                    .claim("roles", roleNames)
                     .expirationTime(new Date(System.currentTimeMillis() + (minutes * 60 * 1000L)))
                     .issueTime(new Date())
                     .build();
@@ -38,6 +47,11 @@ public class JwtConfig {
         }
     }
 
+    /**
+     * Valida un token JWT y extrae su información
+     * @param token Token JWT a validar
+     * @return Payload del token con información del usuario
+     */
     public JwtPayload validate(String token) {
         try {
             var jwt = SignedJWT.parse(token);

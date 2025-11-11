@@ -1,6 +1,5 @@
 package com.authservice.controller;
 
-import com.authservice.dto.UpsertUserRequest;
 import com.authservice.dto.LoginRequest;
 import com.authservice.dto.RegisterRequest;
 import com.authservice.dto.TokenResponse;
@@ -26,10 +25,5 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest req) {
         return ResponseEntity.ok(auth.login(req));
-    }
-
-    @PostMapping("/upsert")
-    public ResponseEntity<TokenResponse> upsert(@Valid @RequestBody UpsertUserRequest req) {
-        return ResponseEntity.ok(auth.upsert(req));
     }
 }
