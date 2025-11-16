@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+docker/mysql/data/mysql.sock
+
+### Sensitive files ###
+/src/main/resources/application-dev.properties

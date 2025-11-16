@@ -1,9 +1,0 @@
-services:
-  auth-service:
-    build:
-      context: .
-    image: auth-service:release
-    ports:
-      - "8088:8084"
-    environment:
-      SERVER_PORT: 8084
