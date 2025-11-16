@@ -84,7 +84,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    def port = sh(script: "grep '^PORT=' ${DEPLOY_DIR}/${ENV_DEPLOY_FILE} | cut -d '=' -f2", returnStdout: true).trim()
+                    def port = sh(script: "grep '^SERVER_PORT=' ${DEPLOY_DIR}/${ENV_DEPLOY_FILE} | cut -d '=' -f2", returnStdout: true).trim()
 
                     sh """
                         docker stop ${CONTAINER_NAME} || true
