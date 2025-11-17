@@ -12,13 +12,14 @@ import com.authservice.dto.TokenResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,7 +36,7 @@ public class AuthService {
     public TokenResponse register(RegisterRequest request) {
         if (userRepository.findByEmail(request.email()).isPresent()) {
             logger.warn("Intento de registro con email existente: {}", request.email());
-            throw new RuntimeException("El usuario ya existe");
+            throw new IllegalStateException("El usuario ya existe");
         }
 
         RoleName assignedRole = determineRoleFromCode(request.code());
@@ -61,15 +62,15 @@ public class AuthService {
     @Transactional(readOnly = true)
     public TokenResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
 
         if (!encoder.matches(request.password(), user.getPasswordHash())) {
-            throw new RuntimeException("Credenciales inválidas");
+            throw new BadCredentialsException("Credenciales inválidas");
         }
 
         List<RoleName> roles = user.getRoles().stream()
                 .map(UserRole::getRoleName)
-                .collect(Collectors.toList());
+                .toList();
 
         String token = jwt.generateToken(user.getEmail(), roles, 30);
         return new TokenResponse(token, "Bearer", 1800);
@@ -95,10 +96,4 @@ public class AuthService {
         return RoleName.ROLE_STUDENT;
     }
 
-    private String generateTempPassword() {
-        var rnd = new SecureRandom();
-        byte[] buf = new byte[12];
-        rnd.nextBytes(buf);
-        return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(buf);
-    }
 }
