@@ -17,7 +17,7 @@ import java.io.IOException;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+    private static final Logger loggerJwt = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtConfig jwtConfig;
 
@@ -60,7 +60,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
         } catch (Exception e) {
-            logger.error("Error al validar JWT: {}", e.getMessage());
+            loggerJwt.error("Error al validar JWT: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);

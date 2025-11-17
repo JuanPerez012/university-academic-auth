@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Component
 public class JwtConfig {
@@ -25,10 +24,9 @@ public class JwtConfig {
         try {
             var signer = new MACSigner(secret.getBytes(StandardCharsets.UTF_8));
 
-            // Convertir enums a strings para el token
             List<String> roleNames = roles.stream()
                     .map(RoleName::name)
-                    .collect(Collectors.toList());
+                    .toList();
 
             var claims = new JWTClaimsSet.Builder()
                     .subject(subject)
@@ -41,17 +39,12 @@ public class JwtConfig {
             jwt.sign(signer);
 
             return jwt.serialize();
+
         } catch (JOSEException e) {
-            logger.error("Error generando token JWT: {}", e.getMessage());
-            throw new IllegalStateException("Error al generar el token JWT", e);
+            throw new SecurityException("Error generando token JWT: No se pudo generar el token JWT", e);
         }
     }
 
-    /**
-     * Valida un token JWT y extrae su información
-     * @param token Token JWT a validar
-     * @return Payload del token con información del usuario
-     */
     public JwtPayload validate(String token) {
         try {
             var jwt = SignedJWT.parse(token);
@@ -64,7 +57,7 @@ public class JwtConfig {
 
             var claims = jwt.getJWTClaimsSet();
             if (claims.getExpirationTime().before(new Date())) {
-                logger.warn("Token expirado para el usuario {}", claims.getSubject());
+                logger.warn("Token expirado para usuario {}", claims.getSubject());
                 throw new SecurityException("Token expirado");
             }
 
@@ -73,9 +66,9 @@ public class JwtConfig {
                     (List<String>) claims.getClaim("roles"),
                     claims.getExpirationTime()
             );
+
         } catch (Exception e) {
-            logger.error("Error validando token JWT: {}", e.getMessage());
-            throw new SecurityException("Token inválido o corrupto", e);
+            throw new SecurityException("Error al validar token JWT: Token inválido o corrupto", e);
         }
     }
 
