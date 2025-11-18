@@ -1,0 +1,28 @@
+services:
+  auth-service:
+    image: ${AUTH_IMAGE:-auth-service:local}
+    environment:
+      SERVER_PORT: ${SERVER_PORT:-8084}
+      APPLICATION_NAME: auth-service
+
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DRIVER: ${DB_DRIVER:-org.postgresql.Driver}
+      DB_HIBERNATE_DIALECT: ${DB_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+      JPA_OPEN_IN_VIEW: ${JPA_OPEN_IN_VIEW:-false}
+      JPA_SHOW_SQL: ${JPA_SHOW_SQL:-true}
+
+      JWT_SECRET: ${JWT_SECRET}
+
+      EUREKA_HOSTNAME: ${EUREKA_HOSTNAME:-localhost}
+      EUREKA_DEFAULTZONE: ${EUREKA_DEFAULTZONE:-http://host.docker.internal:8761/eureka/}
+
+      JAVA_OPTS: ${JAVA_OPTS:-"-Xms256m -Xmx512m"}
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${SERVER_PORT:-8084}/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
